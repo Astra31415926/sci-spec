@@ -1,0 +1,976 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCI MODEL - Deterministic Spectral Response Normalization</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true,
+        processEnvironments: true
+      },
+      options: {
+        ignoreHtmlClass: 'tex2jax_ignore',
+        processHtmlClass: 'tex2jax_process'
+      }
+    };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* Цветовые схемы (Темы) */
+        [data-theme="dark"] {
+            --bg-body: #0B0F19;       
+            --bg-surface: #151B2B;    
+            --bg-surface-hover: #1E293B;
+            --text-main: #F1F5F9;
+            --text-muted: #94A3B8;
+            --accent-primary: #38BDF8; 
+            --accent-secondary: #E879F9; 
+            --border-color: #334155;
+            --nav-bg: rgba(11, 15, 25, 0.85);
+        }
+
+        [data-theme="light"] {
+            --bg-body: #F7F4EB; 
+            --bg-surface: #EDE8DB;    
+            --bg-surface-hover: #E3DCB9;
+            --text-main: #1C1917;
+            --text-muted: #57534E;
+            --accent-primary: #0284C7; 
+            --accent-secondary: #B5179E; 
+            --border-color: #D6D3D1;
+            --nav-bg: rgba(247, 244, 235, 0.85);
+        }
+
+        /* Переменные отступов */
+        :root {
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 2rem;
+            --spacing-lg: 4rem;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 70px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.7;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Навигационная панель */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: var(--nav-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0.6rem 0;
+        }
+
+        .nav-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 var(--spacing-sm);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.2rem;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+
+        .nav-links::-webkit-scrollbar {
+            display: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-primary);
+            text-decoration: none;
+        }
+
+        /* Кнопки управления (Тема / Язык) */
+        .controls-group {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .theme-toggle, .lang-toggle {
+            background: none;
+            border: none;
+            color: var(--accent-primary);
+            cursor: pointer;
+            font-size: 1.1rem;
+            padding: 0.4rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .lang-toggle {
+            font-family: 'Inter', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            border: 1px solid var(--border-color);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            color: var(--text-main);
+        }
+
+        .lang-toggle:hover, .theme-toggle:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-primary);
+        }
+
+        /* Стили разметки контента */
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-sm);
+        }
+
+        h1 {
+            font-size: clamp(1.4rem, 4vw, 2.2rem);
+            font-weight: 600;
+            margin-bottom: var(--spacing-xs);
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+            line-height: 1.3;
+        }
+
+        h2 {
+            font-size: 1.35rem;
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-sm);
+            color: var(--accent-primary);
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: var(--spacing-xs);
+        }
+
+        h3 {
+            font-size: 1.1rem;
+            color: var(--text-main);
+            margin-top: var(--spacing-sm);
+            margin-bottom: var(--spacing-xs);
+            font-weight: 500;
+        }
+
+        p {
+            margin-bottom: var(--spacing-sm);
+            color: var(--text-muted);
+            text-align: justify;
+        }
+
+        strong {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        a {
+            color: var(--accent-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        a:hover {
+            color: var(--accent-secondary);
+            text-decoration: underline;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+            margin-bottom: var(--spacing-md);
+        }
+
+        ul li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: var(--spacing-xs);
+            color: var(--text-muted);
+        }
+
+        ul li::before {
+            content: "•";
+            color: var(--accent-secondary);
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+        }
+
+        /* Изображения */
+        .img-block {
+            display: block;
+            width: 100%;
+            margin: var(--spacing-md) auto;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            background: var(--bg-surface);
+        }
+
+        .img-block img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        
+        .img-caption {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-align: center;
+            padding: var(--spacing-xs);
+            background: rgba(0,0,0,0.03);
+            font-family: 'JetBrains Mono', monospace;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .img-dual-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-sm);
+            margin: var(--spacing-md) 0;
+        }
+
+        @media (min-width: 768px) {
+            .img-dual-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Формулы */
+        .formula-container {
+            padding: var(--spacing-sm) 0;
+        }
+
+        .formula-large {
+            font-size: clamp(0.95rem, 4.5vw, 1.3rem);
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .formula-explanation {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        /* Спойлеры (Details) */
+        details {
+            margin-top: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        summary {
+            cursor: pointer;
+            padding: var(--spacing-sm);
+            font-weight: 600;
+            color: var(--accent-primary);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            background: rgba(56, 189, 248, 0.04);
+        }
+
+        summary::-webkit-details-marker {
+            display: none;
+        }
+
+        summary::after {
+            content: '\f078';
+            font-family: "Font Awesome 6 Free";
+            font-weight: 900;
+            transition: transform 0.3s;
+        }
+
+        details[open] summary::after {
+            transform: rotate(180deg);
+        }
+
+        .details-content {
+            padding: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Сетка генераторов */
+        .generators-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+        }
+
+        @media (min-width: 768px) {
+            .generators-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .gen-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: border-color 0.2s;
+        }
+
+        .gen-card:hover {
+            border-color: var(--accent-primary);
+        }
+
+        .gen-img-wrapper {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            overflow: hidden;
+            background: var(--bg-body);
+        }
+
+        .gen-img-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .gen-info {
+            padding: var(--spacing-sm);
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+            justify-content: space-between;
+        }
+
+        .btn-link {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            background-color: var(--bg-surface-hover);
+            color: var(--accent-primary);
+            padding: 0.6rem 1.2rem;
+            border-radius: 6px;
+            font-weight: 500;
+            margin-top: var(--spacing-sm);
+            border: 1px solid var(--accent-primary);
+            transition: all 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .btn-link:hover {
+            background-color: var(--accent-primary);
+            color: var(--bg-body);
+            text-decoration: none;
+        }
+
+        /* Карточка автора */
+        .author-card {
+            background: var(--bg-surface);
+            padding: var(--spacing-md);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            margin-top: var(--spacing-md);
+        }
+
+        .author-profile {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+            align-items: center;
+        }
+
+        @media (min-width: 768px) {
+            .author-profile {
+                flex-direction: row;
+                align-items: flex-start;
+            }
+        }
+
+        .author-img {
+            width: 130px;
+            height: 130px;
+            object-fit: cover;
+            border-radius: 50%;
+            border: 2px solid var(--accent-secondary);
+            flex-shrink: 0;
+        }
+
+        /* Контакты и Футер */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: var(--bg-surface);
+            padding: 0.75rem;
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .contact-icon {
+            color: var(--accent-primary);
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        footer {
+            margin-top: var(--spacing-lg);
+            padding: var(--spacing-md) 0;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Классы для мультиязычности */
+        .lang-ua, .lang-en {
+            display: none;
+        }
+        
+        html[lang="uk"] .lang-ua { display: block; }
+        html[lang="uk"] span.lang-ua, html[lang="uk"] a.lang-ua, html[lang="uk"] strong.lang-ua { display: inline; }
+        html[lang="uk"] div.lang-ua { display: flex; }
+        
+        html[lang="en"] .lang-en { display: block; }
+        html[lang="en"] span.lang-en, html[lang="en"] a.lang-en, html[lang="en"] strong.lang-en { display: inline; }
+        html[lang="en"] div.lang-en { display: flex; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-links">
+                <a href="#block-1" class="lang-ua">Вступ</a>
+                <a href="#block-1" class="lang-en">Introduction</a>
+                
+                <a href="#block-2" class="lang-ua">Модель</a>
+                <a href="#block-2" class="lang-en">Model</a>
+                
+                <a href="#block-3" class="lang-ua">Застосування</a>
+                <a href="#block-3" class="lang-en">Applications</a>
+                
+                <a href="#block-4" class="lang-ua">Калібрування</a>
+                <a href="#block-4" class="lang-en">Calibration</a>
+                
+                <a href="#block-5" class="lang-ua">Статус</a>
+                <a href="#block-5" class="lang-en">Status</a>
+                
+                <a href="#block-6" class="lang-ua">Автор</a>
+                <a href="#block-6" class="lang-en">Author</a>
+                
+                <a href="#block-7" class="lang-ua">Контакты</a>
+                <a href="#block-7" class="lang-en">Contacts</a>
+            </div>
+            
+            <div class="controls-group">
+                <button class="lang-toggle" id="langBtn">EN</button>
+                
+                <button class="theme-toggle" id="themeBtn" title="Toggle theme">
+                    <i class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+
+        <header style="margin-top: var(--spacing-md); margin-bottom: var(--spacing-md);">
+            <h1 class="lang-ua">ВІДТВОРЮВАНІСТЬ СТРУКТУРИ КОЛЬОРОВОГО СИГНАЛУ В СУБТРАКТИВНОМУ СЕРЕДОВИЩІ</h1>
+            <h1 class="lang-en">REPRODUCIBILITY OF THE COLOR SIGNAL STRUCTURE IN A SUBTRACTIVE MEDIUM</h1>
+            
+            <h3 class="lang-ua">Як зберегти структуру кольорового сигналу при переході між різними фізичними середовищами?</h3>
+            <h3 class="lang-en">How to preserve the structure of a color signal when transitioning between different physical media?</h3>
+            
+            <div class="img-block" style="margin-top: var(--spacing-sm);">
+                <img src="main_sci_rss_blueprint.webp" alt="Spectral Channel Integrity (SCI)">
+                <div class="img-caption">Figure. Spectral Channel Integrity (SCI)</div>
+            </div>
+        </header>
+
+        <p class="lang-ua">
+            Ресурс присвячений синхронізації кольору між випромінювальними (екрани), відбивальними (фарби) та реєструвальними (датчики) системами.
+        </p>
+        <p class="lang-en">
+            This resource is dedicated to color synchronization between emissive (screens), reflective (pigments), and registering (sensors) systems.
+        </p>
+        
+        <section id="block-1">
+            <h2 class="lang-ua">1. Концептуальний вступ</h2>
+            <h2 class="lang-en">1. Conceptual Introduction</h2>
+            
+            <h3 class="lang-ua">Проблема міжканальної інтерференції (Crosstalk)</h3>
+            <h3 class="lang-en">The Problem of Inter-Channel Interference (Crosstalk)</h3>
+            
+            <p class="lang-ua">
+                У реальному фізичному світі субтрактивні барвники мають широкі спектри поглинання. Коли ми кодуємо незалежні потоки даних у канали \(R, G, B\), на фізичному відбитку відбувається накладання спектрів. Це явище породжує міжканальний шум (Crosstalk), який руйнує машиночитану структуру сигналу.
+            </p>
+            <p class="lang-en">
+                In the real physical world, subtractive pigments possess broad absorption spectra. When we encode independent data streams into \(R, G, B\) channels, spectral overlapping occurs on the physical print. This phenomenon generates inter-channel noise (Crosstalk), destroying the machine-readable structure of the signal.
+            </p>
+            
+            <p class="lang-ua">
+                Для вирішення цієї проблеми розроблено модель <strong>SCI (Spectral Channel Integrity)</strong>. Вона усуває взаємний вплив каналів шляхом детермінованої нормалізації параметрів пігментного середовища, повертаючи їм операційну незалежність.
+            </p>
+            <p class="lang-en">
+                To address this problem, the <strong>SCI (Spectral Channel Integrity)</strong> model was developed. It eliminates the mutual influence of channels through deterministic normalization of the pigment medium parameters, restoring their operational independence.
+            </p>
+            
+            <div class="img-block">
+                <img src="crosstalk_comparison.webp" alt="Crosstalk comparison">
+                <div class="img-caption">
+                    <span class="lang-ua">Figure. (A) Теоретичні незалежні RGB-канали. (B) Реальне перекриття та спотворення сигналів (Crosstalk) при стандартному друці. (C) Нормалізація середовища за моделлю SCI для відновлення операційної незалежності.</span>
+                    <span class="lang-en">Figure. (A) Theoretical independent RGB channels. (B) Real overlap and signal distortion (Crosstalk) under standard printing. (C) Medium normalization via the SCI model to restore operational independence.</span>
+                </div>
+            </div>
+
+            <details>
+                <summary>
+                    <span class="lang-ua">ДЕТАЛЬНІШЕ: Обмеження перцепційного підходу та цілі SCI</span>
+                    <span class="lang-en">DETAILS: Limitations of the Perceptual Approach and SCI Goals</span>
+                </summary>
+                <div class="details-content">
+                    <p class="lang-ua">
+                        Класичний підхід Міжнародного консорціуму з кольору (ICC) спирається на колориметрію — підгонку координат під людське сприйняття. Для автоматизованих систем комп'ютерного зору такий підхід є неприйнятним з наступних причин:
+                    </p>
+                    <p class="lang-en">
+                        The classic International Color Consortium (ICC) approach relies on colorimetry — adjusting coordinates to match human perception. For automated computer vision systems, this approach is unacceptable due to the following reasons:
+                    </p>
+                    
+                    <ul>
+                        <li class="lang-ua"><strong>Втрата математичної строгості:</strong> Перцепційні профілі використовують інтерполяційні таблиці, що робить тракт кодування-декодування сигналів незворотним.</li>
+                        <li class="lang-en"><strong>Loss of mathematical rigor:</strong> Perceptual profiles utilize look-up tables (LUT), making the signal encoding-decoding path irreversible.</li>
+                        
+                        <li class="lang-ua"><strong>Ефекти метамеризму:</strong> При зміні спектрального складу зовнішнього освітлення візуально «однакові» кольори кардинально змінюють фізичний профіль відбиття.</li>
+                        <li class="lang-en"><strong>Metabolism effects:</strong> When the spectral composition of ambient lighting changes, visually "identical" colors drastically alter their physical reflection profile.</li>
+                        
+                        <li class="lang-ua"><strong>Руйнування багатошарових даних:</strong> Будь-яка спроба упакувати в один елемент кілька інформаційних шарів розбивається об нелінійне змішування пігментів.</li>
+                        <li class="lang-en"><strong>Destruction of multi-layered data:</strong> Any attempt to pack several information layers into a single element shatters against the non-linear blending of pigments.</li>
+                    </ul>
+                    
+                    <p class="lang-ua">
+                        <strong>Рішення SCI:</strong> Модель здійснює жорстке приведення спектрального відгуку пігментів до загальних фізичних меж, перетворюючи субтрактивне середовище на стабільний аналог аддитивної матриці.
+                    </p>
+                    <p class="lang-en">
+                        <strong>The SCI Solution:</strong> The model strictly constrains the spectral response of pigments to shared physical boundaries, transforming the subtractive medium into a stable counterpart of an additive matrix.
+                    </p>
+                </div>
+            </details>
+        </section>
+
+        <section id="block-2">
+            <h2 class="lang-ua">2. Математична модель</h2>
+            <h2 class="lang-en">2. Mathematical Model</h2>
+            
+            <h3 class="lang-ua">Механізм спектрального лімітування</h3>
+            <h3 class="lang-en">The Mechanism of Spectral Limitation</h3>
+            
+            <p class="lang-ua">
+                <strong>Якір системи — спектральний обмежувач.</strong> Як опорний компонент вибирається пігмент, що має найменший фізичний динамічний діапазон у наборі (в CMY-системах це зазвичай Magenta). Спектральні характеристики інших пігментів примусово масштабуються відносно фізичних меж цього обмежувача, формуючи єдині верхній \(U_{ref}\) і нижній \(L_{ref}\) опорні рівні.
+            </p>
+            <p class="lang-en">
+                <strong>The anchor of the system is the spectral limiter.</strong> A pigment possessing the smallest physical dynamic range in the set is selected as the reference component (typically Magenta in CMY systems). The spectral characteristics of the remaining pigments are forcefully scaled relative to the physical boundaries of this limiter, forming unified upper \(U_{ref}\) and lower \(L_{ref}\) reference levels.
+            </p>
+
+            <div class="img-block" style="width: 85%; margin: var(--spacing-md) auto;">
+                <img src="sci_spectral_scaling_blueprint.webp" alt="Spectral scaling mechanism">
+                <div class="img-caption">
+                    <span class="lang-ua">Спектральне масштабування в моделі SCI. Криві відбиття до нормалізації (ліворуч) та після нормалізації відносно загальних верхнього та нижнього рівнів відліку (праворуч).</span>
+                    <span class="lang-en">Spectral scaling in the SCI model. Reflection curves before normalization (left) and after normalization relative to shared upper and lower reference levels (right).</span>
+                </div>
+            </div>
+
+            <details>
+                <summary>
+                    <span class="lang-ua">ДЕТАЛЬНІШЕ: Математичний апарат масштабування</span>
+                    <span class="lang-en">DETAILS: Mathematical Apparatus of Scaling</span>
+                </summary>
+                <div class="details-content">
+                    <div class="formula-container">
+                        <h3 class="lang-ua">Амплітудне масштабування</h3>
+                        <h3 class="lang-en">Amplitude Scaling</h3>
+                        <div class="formula-large">
+                            $$I_{scaled}^{c}(\lambda) = I_{raw}^{c}(\lambda) \cdot \frac{A_{max}(L)}{A_{max}(c)}$$
+                        </div>
+                        <div class="formula-explanation">
+                            <strong><span class="lang-ua">де:</span><span class="lang-en">where:</span></strong><br>
+                            \(I_{raw}^{c}(\lambda)\) — <span class="lang-ua">вихідна інтенсивність відбиття пігменту на довжині хвилі \(\lambda\);</span><span class="lang-en">initial reflection intensity of the pigment at wavelength \(\lambda\);</span><br>
+                            \(A_{max}(L)\) — <span class="lang-ua">максимальна фізична амплітуда обраного спектрального обмежувача;</span><span class="lang-en">maximum physical amplitude of the selected spectral limiter;</span><br>
+                            \(A_{max}(c)\) — <span class="lang-ua">максимальна амплітуда розглянутого пігменту.</span><span class="lang-en">maximum amplitude of the pigment under consideration.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="formula-container" style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                        <h3 class="lang-ua">Формування загальних опорних рівнів</h3>
+                        <h3 class="lang-en">Formation of Shared Reference Levels</h3>
+                        <div class="formula-large">
+                            $$S_{out} = \frac{S_{in} - L_{ref}}{U_{ref} - L_{ref}}$$
+                        </div>
+                        <div class="formula-explanation">
+                            <strong><span class="lang-ua">де:</span><span class="lang-en">where:</span></strong><br>
+                            \(S_{in}\) — <span class="lang-ua">значення вхідного сигналу після амплітудного вирівнювання;</span><span class="lang-en">input signal value after amplitude alignment;</span><br>
+                            \(U_{ref}\) — <span class="lang-ua">загальний верхній референсний рівень системи;</span><span class="lang-en">shared upper reference level of the system;</span><br>
+                            \(L_{ref}\) — <span class="lang-ua">загальний нижній референсний рівень системи.</span><span class="lang-en">shared lower reference level of the system.</span>
+                        </div>
+                    </div>
+                </div>
+            </details>
+
+            <h3 class="lang-ua">Межі застосовності моделі</h3>
+            <h3 class="lang-en">Boundaries of Model Applicability</h3>
+            <p class="lang-ua">
+                Модель не замінює традиційні методи кольоропередачі та не обмежує використання насичених кольорів у художній та дизайнерській практиці. Її завдання — формування відтворюваного спектрального середовища для додатків, у яких критично важливе збереження структури та операціональної незалежності RGB-каналів.
+            </p>
+            <p class="lang-en">
+                The model does not replace traditional color reproduction methods and does not restrict the use of saturated colors in artistic or design practices. Its goal is to form a reproducible spectral environment for applications where preserving the structure and operational independence of RGB channels is critical.
+            </p>
+            
+            <p><strong><span class="lang-ua">Області застосування:</span><span class="lang-en">Fields of Application:</span></strong></p>
+            <ul>
+                <li class="lang-ua">комп'ютерний зір та системи штучного інтелекту;</li>
+                <li class="lang-en">computer vision and artificial intelligence systems;</li>
+                
+                <li class="lang-ua">прецизійне калібрування оптичних систем;</li>
+                <li class="lang-en">high-precision calibration of optical systems;</li>
+                
+                <li class="lang-ua">багатоканальне спектральне кодування даних.</li>
+                <li class="lang-en">multi-channel spectral data encoding.</li>
+            </ul>
+            
+            <p class="lang-ua">
+                Подібно до того, як камертон не замінює музику, а служить еталоном налаштування, SCI не підміняє існуючі колірні простори, а надає інструмент для завдань, що вимагають детермінованого розділення інформаційних каналів.
+            </p>
+            <p class="lang-en">
+                Just as a tuning fork does not replace music but serves as a tuning standard, SCI does not displace existing color spaces but provides a tool for tasks requiring deterministic separation of information channels.
+            </p>
+        </section>
+
+        <section id="block-3">
+            <h2 class="lang-ua">3. Практичне застосування в комп'ютерному зорі</h2>
+            <h2 class="lang-en">3. Practical Application in Computer Vision</h2>
+            
+            <p class="lang-ua">
+                Ідея збільшити ємність QR-кодів за рахунок використання колірних каналів (RGB) не нова. Але при звичайному друці у форматі CMYK інформація в каналах втрачається через перехресні спотворення (Crosstalk), і вирішити цю проблему алгоритмами декодування практично неможливо. Модель SCI формує фізично стійку структуру колірних каналів, адаптовану під особливості друку, що виключає втрату даних. Вона дозволяє системі комп'ютерного зору чітко бачити та диференціювати кожен колірний канал окремо, що кратно підвищує точність розпізнавання кодів у реальних умовах.
+            </p>
+            <p class="lang-en">
+                The idea to increase QR code capacity by utilizing color channels (RGB) is not new. However, with standard CMYK printing, channel information is lost due to cross-talk distortions, making it practically impossible to solve via decoding algorithms. The SCI model forms a physically stable structure of color channels adapted to printing specifics, which completely eliminates data loss. It allows a computer vision system to clearly see and differentiate each color channel individually, multiplying code recognition accuracy in real-world conditions.
+            </p>
+
+            <div class="generators-grid">
+                <div class="gen-card">
+                    <div class="gen-img-wrapper">
+                        <img src="Mykhailo Kashkarov.webp" alt="Multi-layer QR code">
+                    </div>
+                    <div class="gen-info">
+                        <div>
+                            <h3>Spectrum QR Generator (3-in-1)</h3>
+                            <p style="font-size: 0.9rem;" class="lang-ua">Паралельна упаковка трьох незалежних масивів даних в один фізичний QR-код із розділенням за RGB-каналами.</p>
+                            <p style="font-size: 0.9rem;" class="lang-en">Parallel packaging of three independent data arrays into a single physical QR code with separation into RGB channels.</p>
+                        </div>
+                        <a href="https://astra31415926.github.io/QR.G.B.-ART/" target="_blank" class="btn-link">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> 
+                            <span class="lang-ua">Відкрити генератор 3-в-1</span>
+                            <span class="lang-en">Open 3-in-1 Generator</span>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="gen-card">
+                    <div class="gen-img-wrapper">
+                        <img src="qrnament-mandala.webp" alt="Ornamental QR code">
+                    </div>
+                    <div class="gen-info">
+                        <div>
+                            <h3>QRnament Creator</h3>
+                            <p style="font-size: 0.9rem;" class="lang-ua">Алгоритм безшовного впровадження матричних структур даних в орнаментальні композиції та патерни.</p>
+                            <p style="font-size: 0.9rem;" class="lang-en">An algorithm for seamlessly embedding matrix data structures into ornamental compositions and patterns.</p>
+                        </div>
+                        <a href="https://astra31415926.github.io/QRnament2/" target="_blank" class="btn-link">
+                            <i class="fa-solid fa-bezier-curve"></i> 
+                            <span class="lang-ua">Відкрити QRnament</span>
+                            <span class="lang-en">Open QRnament</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <p style="font-size: 0.95rem; font-style: italic; background: rgba(56, 189, 248, 0.05); padding: 1rem; border-left: 3px solid var(--accent-primary); border-radius: 4px; margin-bottom: var(--spacing-md);">
+                <strong class="lang-ua">Зверніть увагу:</strong><strong class="lang-en">Please note:</strong>
+                <span class="lang-ua"> представлені веб-генератори формують зображення в цифровому вигляді, без адаптації до друку. У вихідному цифровому вигляді ці структури гарантовано декодуються програмним забезпеченням тільки при зчитуванні безпосередньо з екрана вашого монітора.<br><br>Для коректного перенесення на фізичний носій (папір, пластик або полотно) параметри генерованого файлу повинні пройти попередню підготовку до друку згідно з алгоритмами SCI.</span>
+                <span class="lang-en"> the presented web generators generate images in digital form, without print adaptation. In their raw digital form, these structures are guaranteed to be decoded by software only when read directly from your monitor screen.<br><br>For correct transfer to a physical medium (paper, plastic, or canvas), the parameters of the generated file must undergo preliminary print preparation according to SCI algorithms.</span>
+            </p>
+
+            <h3 class="lang-ua">Підрозділ: Практичне випробування</h3>
+            <h3 class="lang-en">Subsection: Practical Testing</h3>
+            <p class="lang-ua">
+                Експеримент із нанесенням багатошарового колірного коду та орнаменту акриловими пігментами на полотно за принципами моделі SCI. Отримані результати демонструють принципову можливість декодування багатошарових структур, сформованих на фізичному носії. Експеримент має попередній характер і потребує подальшої оптимізації алгоритмів кодування та зчитування.
+            </p>
+            <p class="lang-en">
+                An experiment involving the application of a multi-layer color code and ornament using acrylic pigments onto canvas according to SCI model principles. The obtained results demonstrate the fundamental possibility of decoding multi-layer structures formed on a physical medium. The experiment is preliminary and requires further optimization of encoding and reading algorithms.
+            </p>
+
+            <div class="img-dual-grid">
+                <div class="img-block" style="margin:0;">
+                    <img src="steganography_acrylic_canvas.webp" alt="Multi-layer code on canvas">
+                </div>
+                <div class="img-block" style="margin:0;">
+                    <img src="handwork_01.webp" alt="Ornamental acrylic code">
+                </div>
+            </div>
+        </section>
+
+        <section id="block-4">
+            <h2 class="lang-ua">4. Апаратне калібрування</h2>
+            <h2 class="lang-en">4. Hardware Calibration</h2>
+            <p class="lang-ua">
+                Апаратне калібрування SCI засноване на використанні еталонної тестової матриці та набору вузькосмугових RGB-фільтрів <strong>(R ≈ 615 нм, G ≈ 535 нм, B ≈ 450 нм)</strong>. Вихідний цифровий файл виводиться на друк, після чого оцінюється ступінь розділення каналів через відповідні фільтри. Оскільки характеристики принтера, пігментів та носія відрізняються, колірні параметри еталонного файлу підлаштовуються доти, доки на відбитку не буде досягнуто стійкої спектральної сепарації з мінімальною міжканальною інтерференцією <strong>(Crosstalk)</strong>.
+            </p>
+            <p class="lang-en">
+                SCI hardware calibration is based on using a reference test matrix and a set of narrow-band RGB filters <strong>(R ≈ 615 nm, G ≈ 535 nm, B ≈ 450 nm)</strong>. The initial digital file is printed, after which the degree of channel separation through the corresponding filters is evaluated. Since the characteristics of the printer, pigments, and medium vary, the color parameters of the reference file are adjusted until a stable spectral separation with minimal inter-channel interference <strong>(Crosstalk)</strong> is achieved on the print.
+            </p>
+            <p class="lang-ua">
+                Отриманий файл стає еталоном для даної друкованої системи і надалі не змінюється. На наступному етапі з його допомогою калібрується вже сам пристрій відображення. Спостерігаючи зображення на екрані через ті самі фільтри, коригують апаратні параметри монітора до досягнення такого ж розділення каналів, як на фізичному відбитку.
+            </p>
+            <p class="lang-en">
+                The resulting file becomes the benchmark for the given printing system and remains unaltered. In the next step, it is used to calibrate the display device itself. By observing the screen image through the same filters, the monitor's hardware parameters are adjusted to achieve the same channel separation as on the physical print.
+            </p>
+            <p class="lang-ua">
+                В результаті монітор і друкована система виявляються синхронізованими відносно одного й того самого спектрального еталона. Зображення на екрані відображається в межах, що реально відтворюються конкретним друкарським обладнанням, що забезпечує відтворюваність структури RGB-сигналу при переході між аддитивним та субтрактивним середовищем.
+            </p>
+            <p class="lang-en">
+                As a result, the monitor and the printing system are synchronized relative to the exact same spectral reference. The screen image is displayed within the boundaries actually reproducible by the specific printing equipment, ensuring the reproducibility of the RGB signal structure during transitions between additive and subtractive media.
+            </p>
+        </section>
+
+        <section id="block-5" class="project-status">
+            <h2 class="lang-ua">5. Статус проєкту</h2>
+            <h2 class="lang-en">5. Project Status</h2>
+            <p class="lang-ua">Модель SCI перебуває у стадії активного розвитку, формування теоретичної бази та проведення практичних експериментів.</p>
+            <p class="lang-en">The SCI model is in a stage of active development, building its theoretical framework and conducting practical experiments.</p>
+            
+            <h3 class="lang-ua">Для масштабування проєкту необхідні:</h3>
+            <h3 class="lang-en">To scale the project, the following are required:</h3>
+            <ul>
+                <li class="lang-ua"><strong>Тести на професійному друкарському обладнанні.</strong></li>
+                <li class="lang-en"><strong>Testing on professional printing equipment.</strong></li>
+                
+                <li class="lang-ua"><strong>Дослідження з використанням спектрометра</strong> — для точної оцінки того, як алгоритми комп'ютерного зору взаємодіють із кольором у різних умовах.</li>
+                <li class="lang-en"><strong>Spectrometer-backed research</strong> — to precisely evaluate how computer vision algorithms interact with color under varying conditions.</li>
+            </ul>
+            
+            <p class="cooperation class="lang-ua"">Проєкт є відкритим і запрошує до співпраці фахівців у галузі поліграфії, колориметрії та Computer Vision, а також програмістів, спонсорів та всіх, кому цікавий цей напрям.</p>
+            <p class="cooperation class="lang-en"">The project is open source and invites collaboration from specialists in printing, colorimetry, and Computer Vision, as well as programmers, sponsors, and everyone interested in this field.</p>
+        </section>
+
+        <section id="block-6">
+            <h2 class="lang-ua">6. Про автора</h2>
+            <h2 class="lang-en">6. About the Author</h2>
+            <div class="author-card">
+                <div class="author-profile" style="display: grid; grid-template-columns: auto 1fr; gap: 20px; align-items: start;">
+                    
+                    <img src="avatar.webp" alt="Mykhailo Kashkarov" class="author-img" style="grid-row: span 3;">
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 15px;">
+                        <div>
+                            <h3 style="margin: 0; font-size: 1.5rem;" class="lang-ua">Михайло Кашкаров</h3>
+                            <h3 style="margin: 0; font-size: 1.5rem;" class="lang-en">Mikhail Kashkarov</h3>
+                            <p style="font-size: 0.95rem; font-style: italic; margin: 5px 0 0 0; color: #888;" class="lang-ua">Science art художник</p>
+                            <p style="font-size: 0.95rem; font-style: italic; margin: 5px 0 0 0; color: #888;" class="lang-en">Science art artist</p>
+                        </div>
+                        <a href="https://astra31415926.github.io/" target="_blank" class="btn-link" style="margin: 0; white-space: nowrap;">
+                            <i class="fa-solid fa-palette"></i> 
+                            <span class="lang-ua">Галерея автора</span>
+                            <span class="lang-en">Author's Gallery</span>
+                        </a>
+                    </div>
+                    
+                    <p id="author-text" style="font-size: 0.9rem; margin: 15px 0 0 0; line-height: 1.5; max-width: 90%;">
+                        </p>
+                    
+                    <div style="margin-top: 15px;">
+                        <button onclick="toggleBiography()" id="btn-toggle" class="btn-link" style="background: none; border: 1px solid currentColor; cursor: pointer; padding: 5px 25px; border-radius: 4px;">докладніше</button>
+                    </div>
+                    
+                </div>
+            </div>
+        </section>
+
+        <section id="block-7">
+            <h2 class="lang-ua">7. Контакти та публікації</h2>
+            <h2 class="lang-en">7. Contacts and Publications</h2>
+            <div class="contact-grid">
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div><strong>Zenodo (Preprints):</strong><br><a href="https://zenodo.org/records/19633526" target="_blank">Publication Repository</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-brands fa-medium"></i></div>
+                    <div><strong>Medium:</strong><br><a href="https://medium.com/@Bakminsterfuler" target="_blank">@Bakminsterfuler</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-brands fa-github"></i></div>
+                    <div><strong>GitHub:</strong><br><a href="https://github.com/Astra31415926" target="_blank">@Astra31415926</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-brands fa-youtube"></i></div>
+                    <div><strong>YouTube:</strong><br><a href="https://www.youtube.com/@Michael-RGB-ART/videos" target="_blank">Michael-RGB-ART</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-brands fa-facebook"></i></div>
+                    <div><strong>Facebook:</strong><br><a href="https://www.facebook.com/profile.php?id=100070020556929" target="_blank">FB Profile</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-brands fa-x-twitter"></i></div>
+                    <div><strong>X (Twitter):</strong><br><a href="https://x.com/MihailKashkarov" target="_blank">@MihailKashkarov</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-brands fa-linkedin"></i></div>
+                    <div><strong>LinkedIn:</strong><br><a href="https://www.linkedin.com/in/%D0%BC%D0%B8%D1%85%D0%B0%D0%B9%D0%BB%D0%BE-%D0%BA%D0%B0%D1%88%D0%BA%D0%B0%D1%80%D0%BE%D0%B2-281379162/" target="_blank">Михайло Кашкаров</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <div><strong>Email:</strong><br><a href="mailto:bakminsterfuler@gmail.com">bakminsterfuler@gmail.com</a></div>
+                </div>
+                <div class="contact-item">
+                    <div class="contact-icon"><i class="fa-solid fa-paper-plane"></i></div>
+                    <div><strong>Telegram:</strong><br><a href="https://t.me/MichaelKashkarov" target="_blank">@MichaelKashkarov</a></div>
+                </div>
+            </div>
+        </section>
+
+        <footer>
+            <p class="lang-ua">&copy; 2026 SCI MODEL. Дослідження: Михайло Кашкаров. Всі права захищені.</p>
+            <p class="lang-en">&copy; 2026 SCI MODEL. Research by Mikhail Kashkarov. All rights reserved.</p>
+        </footer>
+
+    </main>
+
+    <script>
+        // --- Переключение тем оформления (Dark / Light) ---
+        const themeBtn = document.getElementById('themeBtn');
+        const htmlEl = document.documentElement;
+
+        themeBtn.addEventListener('click', () => {
+            const currentTheme = htmlEl.getAttribute('data-theme');
+            if (currentTheme === 'dark') {
+                htmlEl.setAttribute('data-theme', 'light');
+                themeBtn.innerHTML = '<i class="fa-solid fa-sun"></i>';
+            } else {
+                htmlEl.setAttribute('data-theme', 'dark');
+                themeBtn.innerHTML = '<i class="fa-solid fa-moon"></i>';
+            }
+        });
+
+
+        // --- Логика мультиязычности (UA / EN) ---
+        const langBtn = document.getElementById('langBtn');
+        
+        const biographyData = {
+            uk: {
+                short: "Винахідник та автор світлочутливого RGB-живопису, теоретичне обґрунтування якого лягло в основу моделі SCI",
+                full: "Михайло здобув освіту в галузі графіки, скульптури, дизайну та живопису. Він є учасником міжнародних фестивалів, виставок та арт-резиденцій, лауреатом художніх премій, а також автором запатентованої кінетичної конструкції «Каскад».",
+                btnMore: "докладніше",
+                btnLess: "сховати"
+            },
+            en: {
+                short: "Inventor and author of light-sensitive RGB painting, the theoretical foundation of which formed the basis of the SCI model",
+                full: "Mikhail received his education in graphics, sculpture, design, and painting. He is a participant in international festivals, exhibitions, and art residencies, a laureate of art awards, and the author of the patented kinetic structure 'Cascade'.",
+                btnMore: "more details",
+                btnLess: "hide"
+            }
+        };
+
+        let currentLang = 'uk';
+        let isBioExpanded = false;
+
+        function updateLanguageUI() {
+            htmlEl.setAttribute('lang', currentLang === 'uk' ? 'uk' : 'en');
+            langBtn.innerText = currentLang === 'uk' ? 'EN' : 'UA';
+            
+            // Обновляем текст биографии в зависимости от состояния спойлера
+            const textBlock = document.getElementById('author-text');
+            const button = document.getElementById('btn-toggle');
+            
+            if (isBioExpanded) {
+                textBlock.innerText = biographyData[currentLang].full;
+                button.innerText = biographyData[currentLang].btnLess;
+            } else {
+                textBlock.innerText = biographyData[currentLang].short;
+                button.innerText = biographyData[currentLang].btnMore;
+            }
+        }
+
+        langBtn.addEventListener('click', () => {
+            currentLang = currentLang === 'uk' ? 'en' : 'uk';
+            updateLanguageUI();
+        });
+
+
+        // --- Динамический спойлер биографии автора ---
+        function toggleBiography() {
+            isBioExpanded = !isBioExpanded;
+            updateLanguageUI();
+        }
+
+        // Инициализация при загрузке страницы
+        updateLanguageUI();
+    </script>
+
+</body>
+</html>
