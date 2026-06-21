@@ -551,25 +551,25 @@
             This resource is dedicated to color synchronization between emissive (screens), reflective (pigments), and registering (sensors) systems.
         </p>
         
-        <section id="block-1">
-            <h2 class="lang-ua">1. Концептуальний вступ</h2>
+       <section id="block-1">
+            <h2 class="lang-ua">1. Conceptual Introduction</h2>
             <h2 class="lang-en">1. Conceptual Introduction</h2>
             
             <h3 class="lang-ua">Проблема міжканальної інтерференції (Crosstalk)</h3>
             <h3 class="lang-en">The Problem of Inter-Channel Interference (Crosstalk)</h3>
             
             <p class="lang-ua">
-                У реальному фізичному світі субтрактивні барвники мають широкі спектри поглинання. Коли ми кодуємо незалежні потоки даних у канали \(R, G, B\), на фізичному відбитку відбувається накладання спектрів. Це явище породжує міжканальний шум (Crosstalk), який руйнує машиночитану структуру сигналу.
+                Субтрактивні пігменти мають широкі спектри поглинання, що перекриваються. При друці це викликає взаємний вплив каналів, який порушує вихідну структуру кольору — точні співвідношення інтенсивностей між RGB-каналами.
             </p>
             <p class="lang-en">
-                In the real physical world, subtractive pigments possess broad absorption spectra. When we encode independent data streams into \(R, G, B\) channels, spectral overlapping occurs on the physical print. This phenomenon generates inter-channel noise (Crosstalk), destroying the machine-readable structure of the signal.
+                Subtractive pigments possess broad, overlapping absorption spectra. During printing, this causes inter-channel interference that disrupts the original color structure — the precise intensity ratios between RGB channels.
             </p>
             
             <p class="lang-ua">
-                Для вирішення цієї проблеми розроблено модель <strong>SCI (Spectral Channel Integrity)</strong>. Вона усуває взаємний вплив каналів шляхом детермінованої нормалізації параметрів пігментного середовища, повертаючи їм операційну незалежність.
+                В результаті на відбитку спотворюється те, що в цифровому зображенні визначає кожен колір. Ця втрата структурної цілісності є особливо критичною при незалежному багатоканальному кодуванні даних, де точність пропорцій між каналами необхідна для надійного декодування.
             </p>
             <p class="lang-en">
-                To address this problem, the <strong>SCI (Spectral Channel Integrity)</strong> model was developed. It eliminates the mutual influence of channels through deterministic normalization of the pigment medium parameters, restoring their operational independence.
+                As a result, what defines each color in a digital image becomes distorted on the print. This loss of structural integrity is especially critical in independent multi-channel data encoding, where precise proportions between channels are essential for reliable decoding.
             </p>
             
             <div class="img-block">
