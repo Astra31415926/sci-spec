@@ -774,29 +774,44 @@
             </div>
         </section>
 
-        <section id="block-4">
-            <h2 class="lang-ua">4. Апаратне калібрування</h2>
-            <h2 class="lang-en">4. Hardware Calibration</h2>
+      <section id="block-4">
+            <h2 class="lang-ua">4. Апаратна верифікація та контроль структури</h2>
+            <h2 class="lang-en">4. Hardware Verification and Structure Control</h2>
+            
             <p class="lang-ua">
-                Апаратне калібрування SCI засноване на використанні еталонної тестової матриці та набору вузькосмугових RGB-фільтрів <strong>(R ≈ 615 нм, G ≈ 535 нм, B ≈ 450 нм)</strong>. Вихідний цифровий файл виводиться на друк, після чого оцінюється ступінь розділення каналів через відповідні фільтри. Оскільки характеристики принтера, пігментів та носія відрізняються, колірні параметри еталонного файлу підлаштовуються доти, доки на відбитку не буде досягнуто стійкої спектральної сепарації з мінімальною міжканальною інтерференцією <strong>(Crosstalk)</strong>.
+                Для контролю точності репродукції модель SCI використовує верифікацію за допомогою еталонних оптичних маркерів — тест-об’єктів із градієнтними конусами. Ці конуси мають специфічні спектральні властивості: вони спроектовані так, щоб ізольовано відображатися суворо у своїх RGB-каналах, демонструючи мінімальний міжканальний шум <strong>(Crosstalk)</strong>.
             </p>
             <p class="lang-en">
-                SCI hardware calibration is based on using a reference test matrix and a set of narrow-band RGB filters <strong>(R ≈ 615 nm, G ≈ 535 nm, B ≈ 450 nm)</strong>. The initial digital file is printed, after which the degree of channel separation through the corresponding filters is evaluated. Since the characteristics of the printer, pigments, and medium vary, the color parameters of the reference file are adjusted until a stable spectral separation with minimal inter-channel interference <strong>(Crosstalk)</strong> is achieved on the print.
+                To control reproduction accuracy, the SCI model employs verification via reference optical markers — test matrices featuring gradient cones. These cones are engineered with specific spectral properties to render isolated strictly within their respective RGB channels, demonstrating minimal inter-channel crosstalk <strong>(Crosstalk)</strong>.
             </p>
+
+            <p class="lang-ua" style="margin-left: 20px; font-weight: 500;">
+                Технологічний цикл контролю:<br>
+                1. <strong>Фіксація:</strong> Матриця з конусами розміщується поруч із оригіналом і фотографується разом із ним в одному кадрі.<br>
+                2. <strong>Тиражування:</strong> Отримане цифрове зображення, що містить оригінал та маркери, відправляється на друк.<br>
+                3. <strong>Контроль:</strong> На готовій друкованій продукції оцінюється стан конусів. Їх зйомка через вузькосмугові RGB-фільтри або освітлення відповідними джерелами світла дозволяє перевірити сепарацію каналів безпосередньо на відбитку.
+            </p>
+            <p class="lang-en" style="margin-left: 20px; font-weight: 500;">
+                The process workflow:<br>
+                1. <strong>Capture:</strong> The cone matrix is placed alongside the original artwork and photographed together within a single frame.<br>
+                2. <strong>Replication:</strong> The resulting digital image, containing both the original and the markers, is sent to print.<br>
+                3. <strong>Control:</strong> Channel separation is evaluated directly on the final print. Capturing the printed cones through narrow-band RGB filters or illuminating them with corresponding light sources allows for verification of channel isolation.
+            </p>
+
             <p class="lang-ua">
-                Отриманий файл стає еталоном для даної друкованої системи і надалі не змінюється. На наступному етапі з його допомогою калібрується вже сам пристрій відображення. Спостерігаючи зображення на екрані через ті самі фільтри, коригують апаратні параметри монітора до досягнення такого ж розділення каналів, як на фізичному відбитку.
+                Якщо конуси на фінальному відбитку зберігають чітку ізоляцію, це підтверджує, що процес друку не порушив структуру кольору. Модель SCI гарантує <strong>лінійно правильну структуру каналів</strong>: за умов обмеження насиченості фарби зображення може втратити у соковитості, але воно суворо зберігає вихідні пропорції інтенсивностей RGB, утримуючи колірну цілісність та впізнаваність оригіналу.
             </p>
             <p class="lang-en">
-                The resulting file becomes the benchmark for the given printing system and remains unaltered. In the next step, it is used to calibrate the display device itself. By observing the screen image through the same filters, the monitor's hardware parameters are adjusted to achieve the same channel separation as on the physical print.
+                Distinct separation of the printed cones confirms that the printing process has not disrupted the color structure. The SCI model guarantees a <strong>linearly accurate channel structure</strong>: under ink saturation limitations, the image may lose vividness, but it strictly preserves the original RGB intensity proportions, maintaining the color integrity and identity of the original.
             </p>
-            <p class="lang-ua">
-                В результаті монітор і друкована система виявляються синхронізованими відносно одного й того самого спектрального еталона. Зображення на екрані відображається в межах, що реально відтворюються конкретним друкарським обладнанням, що забезпечує відтворюваність структури RGB-сигналу при переході між аддитивним та субтрактивним середовищем.
+
+            <p class="lang-ua" style="font-style: italic; opacity: 0.8;">
+                Наразі цей метод перебуває на стадії концепту та потребує експериментальної верифікації.
             </p>
-            <p class="lang-en">
-                As a result, the monitor and the printing system are synchronized relative to the exact same spectral reference. The screen image is displayed within the boundaries actually reproducible by the specific printing equipment, ensuring the reproducibility of the RGB signal structure during transitions between additive and subtractive media.
+            <p class="lang-en" style="font-style: italic; opacity: 0.8;">
+                Currently, this method is in the conceptual stage and requires experimental verification.
             </p>
         </section>
-
         <section id="block-5" class="project-status">
             <h2 class="lang-ua">5. Статус проєкту</h2>
             <h2 class="lang-en">5. Project Status</h2>
